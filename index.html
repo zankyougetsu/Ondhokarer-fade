@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Night Cage: অন্ধকারের ফাঁদে - Multiplayer</title>
+    <title>The Night Cage: অন্ধকারের ফাঁদে</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -41,13 +41,13 @@
         h1 {
             color: var(--accent-color);
             font-size: 22px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         p {
             font-size: 13px;
             color: #aaa;
         }
-        input, button {
+        input, select, button {
             width: 100%;
             padding: 12px;
             margin: 8px 0;
@@ -87,76 +87,54 @@
             font-weight: bold;
             color: #ff5555;
         }
-        .box-section {
-            background: #1a1a24;
-            border: 1px solid #333;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 12px;
-            text-align: left;
-        }
     </style>
 </head>
 <body>
 
-    <!-- ১. মেইন হোম স্ক্রিন -->
-    <div class="container" id="home-screen">
+    <!-- কনফিগারেশন ও মোড সিলেকশন স্ক্রিন -->
+    <div class="container" id="config-screen">
         <h1>🕯️ The Night Cage: অন্ধকারের ফাঁদে</h1>
-        <p>হরর বোর্ড গেম - মাল্টিপ্লেয়ার মোড</p>
-        <button onclick="showMultiplayerMenu()" style="background: #28a745; margin-top: 20px; padding: 15px; font-size: 16px;">Play in Room Multiplayer</button>
+        <p>মোবাইল ও পিসি ফ্রেন্ডলি হরর বোর্ড গেম</p>
+        
+        <label style="font-size: 12px; color: #888; display: block; text-align: left; margin-top: 10px;">গেম মোড নির্বাচন করুন:</label>
+        <select id="game-mode-select" onchange="toggleGameMode()">
+            <option value="local">লোকাল পাস অ্যান্ড প্লে (Local Pass & Play)</option>
+            <option value="online">অনলাইন রুম মাল্টিপ্লেয়ার (Online Room & Join)</option>
+        </select>
+
+        <!-- লোকাল মোডের অপশন -->
+        <div id="local-mode-options">
+            <input type="text" id="player-name-local" placeholder="আপনার নাম লিখুন..." value="সাবি্বর">
+            <input type="text" id="player-name-local-2" placeholder="দ্বিতীয় খেলোয়াড়ের নাম..." value="সোহাবা">
+            <button onclick="startLocalGame()" style="background: #7b2cbf;">অ্যাডভেঞ্চার শুরু করুন (Local)</button>
+        </div>
+
+        <!-- অনলাইন রুম মোডের অপশন -->
+        <div id="online-mode-options" class="hidden">
+            <input type="text" id="player-name-online" placeholder="আপনার নাম লিখুন (যেমন: Sabbir)">
+            <button onclick="createOnlineRoom()" style="background: #007bff;">নতুন রুম কোড তৈরি করুন (Get Code)</button>
+            <div id="room-code-box" class="hidden" style="background: #111; padding: 10px; border-radius: 5px; margin: 8px 0; font-size: 16px; color: #ffeb3b; font-weight: bold;"></div>
+            
+            <div style="margin: 10px 0; font-size: 11px; color: #666;">--- অথবা বন্ধুর কোড দিয়ে ঢুকুন ---</div>
+            <input type="text" id="room-code-input" placeholder="বন্ধুর দেওয়া রুম কোড দিন" maxlength="8">
+            <button onclick="joinOnlineRoom()" style="background: #28a745;">রুমে জয়েন করুন (Join)</button>
+        </div>
     </div>
 
-    <!-- ২. মাল্টিপ্লেয়ার নেম ও রুম অপশন স্ক্রিন -->
-    <div class="container hidden" id="multiplayer-menu">
-        <h1>🕯️ রুম মাল্টিপ্লেয়ার</h1>
+    <!-- গেম প্লে স্ক্রিন -->
+    <div class="container hidden" id="game-screen">
+        <h1 id="game-title-bar">অন্ধকারের ফাঁদে</h1>
+        <p id="game-status-msg">খেলা চলছে...</p>
         
-        <div id="name-box">
-            <p>প্রথমে আপনার নাম দিন:</p>
-            <input type="text" id="player-name" placeholder="যেমন: Sabbir" maxlength="15">
-            <button onclick="proceedToRoomOptions()">পরবর্তী ধাপ (Next)</button>
-        </div>
-
-        <div id="room-action-box" class="hidden">
-            <p id="welcome-msg" style="color: #4ecc6d; font-weight: bold;"></p>
-            
-            <!-- রুম ক্রিয়েট অপশন -->
-            <button onclick="createRoom()" style="background: #007bff;">Get Code (রুম তৈরি করুন)</button>
-            <div id="room-code-display" class="hidden" style="background: #111; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 18px; color: #ffeb3b; font-weight: bold;"></div>
-
-            <div style="margin: 15px 0; font-size: 12px; color: #776;">--- অথবা বন্ধুর কোড দিয়ে ঢুকুন ---</div>
-            
-            <!-- রুম জয়েন অপশন -->
-            <input type="text" id="room-code-input" placeholder="রুম কোড দিন (যেমন: X7K92A)" maxlength="8">
-            <button onclick="joinRoom()" style="background: #28a745;">রুমে প্রবেশ করুন (Join)</button>
-        </div>
-
-        <button onclick="backToHome()" style="background: #555; margin-top: 15px;">ফিরে যান</button>
-    </div>
-
-    <!-- ৩. গেম লবি ও রুম স্ক্রিন (ম্যাক্স ৪ জন) -->
-    <div class="container hidden" id="room-lobby-screen">
-        <h1 id="room-title">রুম কোড: --</h1>
-        <p id="room-status-text">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে (সর্বোচ্চ ৪ জন)...</p>
-        
-        <!-- কানেক্টেড প্লেয়ার লিস্ট বক্স -->
-        <div class="box-section">
-            <div style="font-size: 13px; color: #aaa; margin-bottom: 6px;">👥 রুমে যুক্ত খেলোয়াড়গণ:</div>
-            <div id="players-list" style="font-size: 14px; color: #4ecc6d; font-weight: bold;">কেউ নেই</div>
-        </div>
-
-        <!-- ৬x৬ গেম বোর্ড -->
         <div id="game-grid"></div>
 
-        <div id="turn-indicator" style="background: #222; padding: 8px; border-radius: 5px; font-size: 14px; margin-top: 10px; color: #ff9800;"></div>
+        <div id="online-players-box" class="hidden" style="background: #1a1a24; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 13px; color: #4ecc6d; text-align: left;"></div>
 
-        <button onclick="startGamePlay()" id="start-btn" class="hidden" style="background: #ffc107; color: #000; margin-top: 10px;">খেলা শুরু করুন (Start Game)</button>
-        <button onclick="leaveRoom()" style="background: #dc3545; margin-top: 10px;">রুম ছাড়ুন</button>
+        <button onclick="leaveToMenu()" style="background: #dc3545; margin-top: 15px;">মেইন মেনুতে ফিরে যান</button>
     </div>
 
 <script>
-    // ----------------------------------------------------
-    // ফায়ারবেস কনফিগারেশন (তোমার প্রজেক্টের ডাটাবেস লিংক এখানে থাকবে)
-    // ----------------------------------------------------
+    // ফায়ারবেস কনফিগারেশন
     const firebaseConfig = {
         apiKey: "YOUR_FIREBASE_API_KEY",
         authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
@@ -172,114 +150,22 @@
     }
     const db = firebase.database();
 
-    let playerName = "";
+    let currentMode = "local";
     let currentRoomCode = "";
     let roomRef = null;
-    let isHost = false;
+    let myName = "";
 
-    // হোম থেকে মাল্টিপ্লেয়ার মেনুতে যাওয়া
-    function showMultiplayerMenu() {
-        document.getElementById("home-screen").classList.add("hidden");
-        document.getElementById("multiplayer-menu").classList.remove("hidden");
-    }
-
-    function backToHome() {
-        document.getElementById("multiplayer-menu").classList.add("hidden");
-        document.getElementById("home-screen").classList.remove("hidden");
-    }
-
-    // নাম দিয়ে রুম অপশনে যাওয়া
-    function proceedToRoomOptions() {
-        const nameInput = document.getElementById("player-name").value.trim();
-        if (!nameInput) {
-            alert("দয়া করে আগে আপনার নাম লিখুন!");
-            return;
+    function toggleGameMode() {
+        currentMode = document.getElementById("game-mode-select").value;
+        if (currentMode === "local") {
+            document.getElementById("local-mode-options").classList.remove("hidden");
+            document.getElementById("online-mode-options").classList.add("hidden");
+        } else {
+            document.getElementById("local-mode-options").classList.add("hidden");
+            document.getElementById("online-mode-options").classList.remove("hidden");
         }
-        playerName = nameInput;
-        document.getElementById("name-box").classList.add("hidden");
-        document.getElementById("room-action-box").classList.remove("hidden");
-        document.getElementById("welcome-msg").innerText = `স্বাগতম, ${playerName}!`;
     }
 
-    // র‍্যান্ডম রুম কোড জেনারেটর
-    function generateRoomCode() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
-
-    // রুম তৈরি করা (Get Code)
-    function createRoom() {
-        currentRoomCode = generateRoomCode();
-        roomRef = db.ref("rooms/" + currentRoomCode);
-        isHost = true;
-
-        roomRef.set({
-            host: playerName,
-            status: "waiting",
-            turn: playerName,
-            players: {
-                [playerName]: { name: playerName, pos: 0 }
-            }
-        }).then(() => {
-            const codeBox = document.getElementById("room-code-display");
-            codeBox.innerText = `রুম কোড: ${currentRoomCode}`;
-            codeBox.classList.remove("hidden");
-            
-            // একটু পরে লবি স্ক্রিনে নিয়ে যাবে
-            setTimeout(() => {
-                enterLobbyScreen(currentRoomCode);
-            }, 1200);
-        }).catch((err) => {
-            alert("রুম তৈরিতে সমস্যা: " + err.message);
-        });
-    }
-
-    // রুমে জয়েন করা (Join Room)
-    function joinRoom() {
-        const codeInput = document.getElementById("room-code-input").value.trim().toUpperCase();
-        if (!codeInput) {
-            alert("দয়া করে সঠিক রুম কোড দিন!");
-            return;
-        }
-
-        currentRoomCode = codeInput;
-        roomRef = db.ref("rooms/" + currentRoomCode);
-        isHost = false;
-
-        roomRef.once("value", (snapshot) => {
-            if (snapshot.exists()) {
-                const roomData = snapshot.val();
-                const players = roomData.players || {};
-                const playerKeys = Object.keys(players);
-
-                // সর্বোচ্চ ৪ জন চেক
-                if (playerKeys.length >= 4 && !players[playerName]) {
-                    alert("দুঃখিত, এই রুমে ইতোমধ্যে সর্বোচ্চ ৪ জন খেলোয়াড় হয়ে গেছে!");
-                    return;
-                }
-
-                roomRef.child("players/" + playerName).set({
-                    name: playerName,
-                    pos: 0
-                }).then(() => {
-                    enterLobbyScreen(currentRoomCode);
-                });
-            } else {
-                alert("এই কোডের কোনো রুম খুঁজে পাওয়া যায়নি!");
-            }
-        });
-    }
-
-    // লবি বা গেম স্ক্রিনে প্রবেশ
-    function enterLobbyScreen(code) {
-        document.getElementById("multiplayer-menu").classList.add("hidden");
-        document.getElementById("room-lobby-screen").classList.remove("hidden");
-        document.getElementById("room-title").innerText = `রুম কোড: ${code}`;
-        
-        initGrid();
-        listenToRoomData();
-    }
-
-    // ৬x৬ গ্রিড তৈরি
     function initGrid() {
         const grid = document.getElementById("game-grid");
         grid.innerHTML = "";
@@ -292,61 +178,114 @@
         }
     }
 
-    // রিয়েল-টাইম প্লেয়ার ও টার্ন ট্র্যাক করা
-    function listenToRoomData() {
-        roomRef.on("value", (snapshot) => {
-            if (!snapshot.exists()) return;
-            const data = snapshot.val();
-            const players = data.players || {};
-            
-            let namesList = [];
-            let playerArray = [];
+    // লোকাল পাস অ্যান্ড প্লে শুরু
+    function startLocalGame() {
+        const p1 = document.getElementById("player-name-local").value.trim() || "প্লায়ার ১";
+        const p2 = document.getElementById("player-name-local-2").value.trim() || "প্লায়ার ২";
+        
+        document.getElementById("config-screen").classList.add("hidden");
+        document.getElementById("game-screen").classList.remove("hidden");
+        document.getElementById("game-title-bar").innerText = `লোকাল মোড: ${p1} vs ${p2}`;
+        document.getElementById("game-status-msg").innerText = `টার্ন: ${p1}`;
+        document.getElementById("online-players-box").classList.add("hidden");
 
-            // গ্রিড ক্লিয়ার করা
+        initGrid();
+        document.getElementById("cell-0").innerText = p1[0];
+        document.getElementById("cell-1").innerText = p2[0];
+    }
+
+    // অনলাইন রুম তৈরি
+    function createOnlineRoom() {
+        myName = document.getElementById("player-name-online").value.trim();
+        if (!myName) {
+            alert("দয়া করে আগে আপনার নাম লিখুন!");
+            return;
+        }
+
+        currentRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        roomRef = db.ref("rooms/" + currentRoomCode);
+
+        roomRef.set({
+            host: myName,
+            status: "waiting",
+            players: {
+                [myName]: { name: myName, pos: 0 }
+            }
+        }).then(() => {
+            const codeBox = document.getElementById("room-code-box");
+            codeBox.innerText = `রুম কোড: ${currentRoomCode}`;
+            codeBox.classList.remove("hidden");
+
+            setTimeout(() => {
+                enterOnlineGameScreen(currentRoomCode);
+            }, 1000);
+        });
+    }
+
+    // অনলাইন রুমে জয়েন
+    function joinOnlineRoom() {
+        myName = document.getElementById("player-name-online").value.trim();
+        const codeInput = document.getElementById("room-code-input").value.trim().toUpperCase();
+
+        if (!myName) {
+            alert("দয়া করে আপনার নাম লিখুন!");
+            return;
+        }
+        if (!codeInput) {
+            alert("দয়া করে রুম কোড দিন!");
+            return;
+        }
+
+        currentRoomCode = codeInput;
+        roomRef = db.ref("rooms/" + currentRoomCode);
+
+        roomRef.once("value", (snapshot) => {
+            if (snapshot.exists()) {
+                roomRef.child("players/" + myName).set({
+                    name: myName,
+                    pos: 0
+                }).then(() => {
+                    enterOnlineGameScreen(currentRoomCode);
+                });
+            } else {
+                alert("এই কোডের কোনো রুম পাওয়া যায়নি!");
+            }
+        });
+    }
+
+    function enterOnlineGameScreen(code) {
+        document.getElementById("config-screen").classList.add("hidden");
+        document.getElementById("game-screen").classList.remove("hidden");
+        document.getElementById("game-title-bar").innerText = `অনলাইন রুম: ${code}`;
+        document.getElementById("online-players-box").classList.remove("hidden");
+
+        initGrid();
+        
+        roomRef.child("players").on("value", (snapshot) => {
+            const players = snapshot.val();
+            let listHTML = "👥 রুমে যুক্ত আছেন:<br>";
+            
             for (let i = 0; i < 36; i++) {
                 document.getElementById(`cell-${i}`).innerText = `[${i+1}]`;
             }
 
-            Object.values(players).forEach(p => {
-                namesList.push(`🕯️ ${p.name}`);
-                playerArray.push(p.name);
-                // বোর্ডে পজিশন দেখানো
-                if(document.getElementById(`cell-${p.pos}`)) {
-                    document.getElementById(`cell-${p.pos}`).innerText = p.name[0].toUpperCase();
-                }
-            });
-
-            document.getElementById("players-list").innerHTML = namesList.join("<br>");
-            document.getElementById("room-status-text").innerText = `মোট খেলোয়াড়: ${playerArray.length}/4 জন`;
-
-            // হোস্ট চাইলে খেলা শুরু করতে পারবে যদি অন্তত ২ জন থাকে
-            if (isHost && playerArray.length >= 1 && data.status === "waiting") {
-                document.getElementById("start-btn").classList.remove("hidden");
+            if (players) {
+                Object.values(players).forEach(p => {
+                    listHTML += `• ${p.name}<br>`;
+                    if(document.getElementById(`cell-${p.pos}`)) {
+                        document.getElementById(`cell-${p.pos}`).innerText = p.name[0].toUpperCase();
+                    }
+                });
             }
-
-            if (data.status === "playing") {
-                document.getElementById("start-btn").classList.add("hidden");
-                document.getElementById("turn-indicator").innerText = `🎯 বর্তমান টার্ন: ${data.turn}`;
-            }
+            document.getElementById("online-players-box").innerHTML = listHTML;
         });
     }
 
-    // খেলা শুরু করা (Host Action)
-    function startGamePlay() {
-        roomRef.update({
-            status: "playing"
-        });
-    }
-
-    // রুম ত্যাগ করা
-    function leaveRoom() {
-        if (roomRef && playerName) {
-            roomRef.child("players/" + playerName).remove().then(() => {
-                location.reload();
-            });
-        } else {
-            location.reload();
+    function leaveToMenu() {
+        if (currentMode === "online" && roomRef && myName) {
+            roomRef.child("players/" + myName).remove();
         }
+        location.reload();
     }
 </script>
 
