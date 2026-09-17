@@ -3,664 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Night Cage: অন্ধকারের ফাঁদে (Mobile & PC Friendly)</title>
+    <title>The Night Cage: অন্ধকারের ফাঁদে</title>
+    <!-- Firebase SDK (Compat Version for Vanilla JS) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --bg-color: #0b0b0f;
+            --panel-bg: #14141d;
+            --accent-color: #e50914;
+            --text-color: #e0e0e0;
+            --border-color: #2a2a3d;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0d0d0d;
-            color: #e0e0e0;
             margin: 0;
-            padding: 10px;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
         }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            text-align: center;
+        }
         h1 {
-            color: #cf6679;
-            margin: 5px 0;
-            font-size: clamp(20px, 4vw, 26px);
-            text-align: center;
+            color: var(--accent-color);
+            font-size: 24px;
+            margin-bottom: 10px;
         }
-        .subtitle {
-            font-size: clamp(11px, 2.5vw, 13px);
+        p {
+            font-size: 14px;
             color: #aaa;
-            margin-bottom: 10px;
-            text-align: center;
         }
-        
-        /* Main Layout - Responsive Grid/Flex */
-        .main-layout {
-            display: flex;
-            gap: 15px;
-            max-width: 900px;
+        input, select, button {
             width: 100%;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        /* Responsive Board */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(45px, 1fr));
-            grid-template-rows: repeat(6, minmax(45px, 1fr));
-            gap: 3px;
-            background: #222;
-            padding: 6px;
-            border: 3px solid #444;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 410px;
-            aspect-ratio: 1 / 1;
-        }
-        .cell {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(8px, 2vw, 10px);
-            position: relative;
-            color: #777;
-            border-radius: 4px;
-        }
-        .player-token {
-            width: clamp(12px, 3vw, 16px);
-            height: clamp(12px, 3vw, 16px);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px currentColor;
-            margin: 1px;
-        }
-
-        /* Control Panel */
-        .panel {
-            background: #1e1e1e;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            flex: 1;
-            min-width: 280px;
-            max-width: 380px;
-            width: 100%;
-        }
-        .status-box {
-            background: #2c2c2c;
-            padding: 10px;
+            padding: 12px;
+            margin: 8px 0;
+            background: #1f1f2e;
+            border: 1px solid var(--border-color);
+            color: #fff;
             border-radius: 6px;
-            margin-bottom: 10px;
-            font-size: clamp(11px, 2.5vw, 13px);
-            border-left: 4px solid #bb86fc;
-            line-height: 1.4;
-        }
-        .log-box {
-            background: #121212;
-            border: 1px solid #333;
-            height: 100px;
-            border-radius: 6px;
-            padding: 8px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 11px;
-            margin-bottom: 10px;
-            color: #03dac6;
-        }
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .direction-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 5px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
         }
         button {
-            background-color: #bb86fc;
-            color: #121212;
-            border: none;
-            padding: 10px 12px;
-            border-radius: 5px;
-            cursor: pointer;
+            background: var(--accent-color);
             font-weight: bold;
-            font-size: 13px;
-            transition: 0.2s;
-            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        button:hover { background-color: #3700b3; color: #fff; }
-        button:disabled { background-color: #444; color: #777; cursor: not-allowed; }
-        
-        .dice-display {
-            font-size: 35px;
-            text-align: center;
-            margin: 5px 0;
-            color: #ffeb3b;
+        button:hover {
+            background: #b20710;
         }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85);
+        .hidden {
+            display: none !important;
+        }
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            margin-top: 15px;
+        }
+        .grid-cell {
+            aspect-ratio: 1;
+            background: #1a1a26;
+            border: 1px solid #333;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-        }
-        .modal-content {
-            background: #252525;
-            padding: 20px;
-            border: 2px solid #cf6679;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.7);
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .modal-content h2 { margin-top: 0; color: #ff5252; font-size: 20px; }
-        .setup-screen { text-align: center; margin-top: 10px; max-width: 450px; width: 100%; padding: 15px; }
-        select, input { padding: 8px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; margin: 5px 0; width: 100%; max-width: 320px; }
-        .story-box { text-align: left; font-size: clamp(12px, 3vw, 13px); color: #ddd; line-height: 1.6; background: #1a1a1a; padding: 12px; border-radius: 5px; border-left: 3px solid #ff5252; margin-bottom: 15px; }
-        
-        .room-code-badge {
-            background: #333;
-            color: #03dac6;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-family: monospace;
+            font-size: 12px;
             font-weight: bold;
-            border: 1px dashed #03dac6;
         }
     </style>
 </head>
 <body>
 
-    <h1>The Night Cage: অন্ধকারের ফাঁদে</h1>
-    <div class="subtitle">মোবাইল ও পিসি ফ্রেন্ডলি হরর বোর্ড গেম</div>
-
-    <div style="margin-bottom: 10px;">
-        <button onclick="openRulebook()" style="background-color: #03dac6; font-size: 11px; padding: 6px 12px; width: auto;">📖 গাইড বুক</button>
-    </div>
-
-    <!-- Intro Screen -->
-    <div class="setup-screen" id="introContainer">
-        <h2>অন্ধকারের রাজ্যে স্বাগতম</h2>
-        <div class="story-box">
-            আপনি চোখ খুলে হঠাৎ দেখলেন, আপনি এবং আপনার সঙ্গীরা এক নিখুঁত অন্ধকারের গোলকধাঁধাঁয় আটকা পড়ে আছেন। চারপাশে জমাট বাঁধা অন্ধকার আর নিস্তব্ধতা। আপনাদের প্রত্যেকের হাতে কেবল একটি করে মিটমিটে মোমবাতি জ্বলছে। 
-            <br><br>
-            হঠাৎ পায়ের কাছে একটি রক্তমাখা চিরকুট পাওয়া গেল। তাতে আগের কোনো এক হতভাগ্য বন্দীর লেখা— <i>"যত দ্রুত সম্ভব এখান থেকে পালাও। এই নরক থেকে বের হওয়ার একমাত্র রাস্তা ওই এক্সিট গেট, যা খুলতে ৪টি চাবি লাগবে। কিন্তু খুব সাবধানে পা ফেলো... ওরা শুনছে!"</i>
-        </div>
-        <button onclick="goToSetup()" style="font-size: 15px; padding: 12px; background-color: #ff5252; color: #fff;">ভিতরে যান (Enter)</button>
-    </div>
-
-    <!-- Setup Screen -->
-    <div class="setup-screen" id="setupContainer" style="display: none;">
-        <h3>গেম কনফিগারেশন</h3>
+    <div class="container" id="menu-screen">
+        <h1>🕯️ The Night Cage: অন্ধকারের ফাঁদে</h1>
+        <p>রিয়েল-টাইম মাল্টিপ্লেয়ার হরর বোর্ড গেম</p>
         
-        <label style="font-size: 13px;">গেম মোড:</label><br>
-        <select id="gameModeInput" onchange="toggleOnlineOptions()">
-            <option value="local" selected>লোকাল পাস অ্যান্ড প্লে (Local Pass & Play)</option>
-            <option value="online">অনلاین রুম মোড (Online Host & Join)</option>
-        </select><br>
-
-        <div id="onlineConfigSection" style="display: none; background: #1a1a1a; padding: 10px; border-radius: 5px; margin: 10px auto;">
-            <div id="hostControls">
-                <button type="button" onclick="generateRoomCode()" style="background-color: #03dac6; font-size: 12px; margin-bottom:5px;">নতুন রুম কোড তৈরি করুন</button><br>
-                <span style="font-size: 11px; color:#aaa;">রুম কোড:</span> <span id="displayGeneratedCode" class="room-code-badge">-------</span>
-            </div>
-            <div style="margin-top: 8px;">
-                <input type="text" id="joinCodeInput" placeholder="বন্ধুর দেওয়া রুম কোড দিন"><br>
-                <button type="button" onclick="joinRoomByCode()" style="background-color: #ffeb3b; color:#000; font-size:11px; padding:6px; margin-top:4px;">রুমে জয়েন করুন</button>
-            </div>
-        </div>
-
-        <label style="font-size: 13px;">খেলোয়াড় সংখ্যা (১-৪):</label><br>
-        <input type="number" id="playerCountInput" min="1" max="4" value="2" onchange="generateNameInputs()"><br>
+        <input type="text" id="player-name" placeholder="আপনার নাম লিখুন..." maxlength="15">
         
-        <div id="playerNamesContainer" style="margin: 10px 0; font-size: 13px;"></div>
+        <button onclick="createRoom()">নতুন রুম তৈরি করুন (Create Room)</button>
+        <div style="margin: 10px 0; font-size: 13px; color: #666;">--- অথবা ---</div>
+        <input type="text" id="room-code-input" placeholder="রুম কোড দিন (যেমন: ABC1234)">
+        <button onclick="joinRoom()" style="background: #28a745;">রুমে প্রবেশ করুন (Join Room)</button>
+    </div>
 
-        <label style="font-size: 13px;">ডিফিকাল্টি লেভেল:</label><br>
-        <select id="difficultyInput">
-            <option value="easy">সহজ (Easy)</option>
-            <option value="medium" selected>মাধ্যমিক (Medium)</option>
-            <option value="hard">কঠিন (Hard)</option>
-            <option value="nightmare">দুঃস্বপ্ন (Nightmare - চরম)</option>
-        </select><br><br>
+    <div class="container hidden" id="game-screen">
+        <h1 id="room-title">রুম: লবি</h1>
+        <p id="status-text">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</p>
         
-        <button onclick="startGame()">অ্যাডভেঞ্চার শুরু করুন</button>
-    </div>
-
-    <!-- Game Screen -->
-    <div class="main-layout" id="gameContainer" style="display: none;">
-        <div class="board" id="gameBoard"></div>
-
-        <div class="panel">
-            <div class="status-box" id="statusDisplay"></div>
-            <div class="log-box" id="logBox"><div>মোমবাতির আলোয় পথ দেখা যাচ্ছে...</div></div>
-            
-            <div class="controls">
-                <button id="btnMovement" onclick="drawMovementCard()">১. মুভমেন্ট কার্ড তুলুন</button>
-                
-                <div id="directionSection" style="display:none;">
-                    <div style="font-size: 12px; margin-bottom: 5px; color:#bb86fc; text-align:center;">যাওয়ার দিক সিলেক্ট করুন:</div>
-                    <div class="direction-controls">
-                        <div></div>
-                        <button onclick="movePlayerDirection('UP')">⬆️</button>
-                        <div></div>
-                        <button onclick="movePlayerDirection('LEFT')">⬅️</button>
-                        <button onclick="movePlayerDirection('DOWN')">⬇️</button>
-                        <button onclick="movePlayerDirection('RIGHT')">➡️</button>
-                    </div>
-                </div>
-
-                <button id="btnFate" onclick="drawFateCard()" disabled>২. ফেট কার্ড তুলুন</button>
-                
-                <div id="nurseSection" style="display:none; text-align:center;">
-                    <div class="dice-display" id="diceVisualDisplay">⚀</div>
-                    <button id="btnNurseRoll" onclick="rollPsychonurseDice()" style="background-color: #cf6679;">ডাইস রোল করুন (সাইকোনার্স)</button>
-                </div>
-            </div>
+        <div id="game-grid">
+            <!-- ৬x৬ গেম বোর্ড জেনারেট হবে -->
         </div>
-    </div>
 
-    <!-- Card Popup Modal -->
-    <div class="modal" id="cardModal">
-        <div class="modal-content">
-            <h2 id="modalTitle">কার্ডের নাম</h2>
-            <div class="modal-icon" id="modalIcon" style="font-size: 28px; margin: 10px 0;">📜</div>
-            <p id="modalDesc" style="font-size: 13px; color: #ddd; line-height: 1.5;">কার্ডের বিবরণ...</p>
-            <button onclick="closeModal()" style="margin-top: 10px;">ঠিক আছে (OK)</button>
-        </div>
-    </div>
-
-    <!-- Rulebook Modal -->
-    <div class="modal" id="rulebookModal">
-        <div class="modal-content" style="text-align: left;">
-            <h2 style="text-align: center;">📖 গাইড বুক</h2>
-            <p style="font-size: 12px; line-height: 1.5; color: #ccc;">
-                <b>উদ্দেশ্য:</b> দলগতভাবে ৪টি চাবি সংগ্রহ করে এক্সিট গেট দিয়ে পালিয়ে যাওয়া।<br>
-                <b>মোবাইল ফ্রেন্ডলি:</b> পিসি বা মোবাইল ব্রাউজার উভয়েই স্ক্রিন সাইজ অনুযায়ী স্বয়ংক্রিয়ভাবে ফিট হয়ে যাবে।<br>
-                <b>মোমবাতি:</b> মুভমেন্ট ডেকের কার্ড শেষ হওয়া মানে মোমবাতি নিভে যাওয়া এবং গেম ওভার।
-            </p>
-            <div style="text-align: center; margin-top: 15px;"><button onclick="closeRulebook()" style="width: auto; padding: 6px 16px;">বন্ধ করুন</button></div>
-        </div>
+        <button onclick="leaveRoom()" style="background: #dc3545; margin-top: 15px;">রুম ছাড়ুন</button>
     </div>
 
 <script>
-    const BOARD_SIZE = 6;
-    let players = [];
-    let currentPlayerIndex = 0;
-    let phase = 'MOVEMENT'; 
-    let currentMovement = 0;
-    let difficulty = 'medium';
-    let gameMode = 'local';
-    let currentRoomCode = 'N/A';
-    
-    let exitDoor = { x: 5, y: 5, revealed: false };
-    let movementDeck = [];
-    let fateDeck = [];
-
-    window.onload = function() {
-        generateNameInputs();
+    // ----------------------------------------------------
+    // ফায়ারবেস কনফিগারেশন (এখানে তোমার ফায়ারবেস প্রজেক্টের ইনফো বসবে)
+    // ----------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "YOUR_FIREBASE_API_KEY",
+        authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+        databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+        projectId: "YOUR_FIREBASE_PROJECT_ID",
+        storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+        appId: "YOUR_FIREBASE_APP_ID"
     };
 
-    function goToSetup() {
-        document.getElementById('introContainer').style.display = 'none';
-        document.getElementById('setupContainer').style.display = 'block';
+    // ফায়ারবেস ইনিশিয়ালাইজ
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
+    const db = firebase.database();
 
-    function toggleOnlineOptions() {
-        const mode = document.getElementById('gameModeInput').value;
-        const onlineSection = document.getElementById('onlineConfigSection');
-        if(mode === 'online') {
-            onlineSection.style.display = 'block';
-            generateRoomCode();
-        } else {
-            onlineSection.style.display = 'none';
+    let currentRoomCode = null;
+    let playerName = "";
+    let roomRef = null;
+
+    // ৬x৬ গ্রিড রেন্ডার করার ফাংশন
+    function initGrid() {
+        const grid = document.getElementById("game-grid");
+        grid.innerHTML = "";
+        for (let i = 0; i < 36; i++) {
+            const cell = document.createElement("div");
+            cell.className = "grid-cell";
+            cell.id = `cell-${i}`;
+            grid.appendChild(cell);
         }
     }
 
+    // রুম কোড জেনারেটর
     function generateRoomCode() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let code = '';
-        for(let i=0; i<5; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        currentRoomCode = 'NIGHT-' + code;
-        document.getElementById('displayGeneratedCode').innerText = currentRoomCode;
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
     }
 
-    function joinRoomByCode() {
-        const code = document.getElementById('joinCodeInput').value.trim();
-        if(code) {
-            alert(`সফলভাবে রুম কোড [ ${code} ]-এ কানেক্ট করা হয়েছে!`);
-            currentRoomCode = code;
-        } else {
-            alert('দয়া করে সঠিক রুম কোড ইনপুট দাও।');
+    // রুম তৈরি করা
+    function createRoom() {
+        playerName = document.getElementById("player-name").value.trim();
+        if (!playerName) {
+            alert("দয়া করে আগে আপনার নাম লিখুন!");
+            return;
         }
+
+        currentRoomCode = generateRoomCode();
+        roomRef = db.ref("rooms/" + currentRoomCode);
+
+        roomRef.set({
+            host: playerName,
+            status: "waiting",
+            players: {
+                [playerName]: { name: playerName, pos: 0 }
+            }
+        }).then(() => {
+            enterGameScreen(currentRoomCode);
+        }).catch((error) => {
+            alert("রুম তৈরি করতে সমস্যা হয়েছে: " + error.message);
+        });
     }
 
-    function generateNameInputs() {
-        const count = parseInt(document.getElementById('playerCountInput').value);
-        const container = document.getElementById('playerNamesContainer');
-        container.innerHTML = '<b>প্লেয়ারদের নাম দিন:</b><br>';
-        const defaultNames = ['সাবি্বর', 'সোহাবা', 'প্লেয়ার ৩', 'প্লেয়ার ৪'];
-        for(let i=0; i<count; i++) {
-            container.innerHTML += `<input type="text" id="playerName_${i}" value="${defaultNames[i]}" placeholder="প্লেয়ার ${i+1} এর নাম"><br>`;
+    // রুমে জয়েন করা
+    function joinRoom() {
+        playerName = document.getElementById("player-name").value.trim();
+        const codeInput = document.getElementById("room-code-input").value.trim().toUpperCase();
+
+        if (!playerName) {
+            alert("দয়া করে আপনার নাম লিখুন!");
+            return;
         }
+        if (!codeInput) {
+            alert("দয়া করে সঠিক রুম কোড দিন!");
+            return;
+        }
+
+        currentRoomCode = codeInput;
+        roomRef = db.ref("rooms/" + currentRoomCode);
+
+        roomRef.once("value", (snapshot) => {
+            if (snapshot.exists()) {
+                roomRef.child("players/" + playerName).set({
+                    name: playerName,
+                    pos: 0
+                }).then(() => {
+                    enterGameScreen(currentRoomCode);
+                });
+            } else {
+                alert("এই কোডের কোনো রুম খুঁজে পাওয়া যায়নি!");
+            }
+        });
     }
 
-    function startGame() {
-        const count = parseInt(document.getElementById('playerCountInput').value);
-        difficulty = document.getElementById('difficultyInput').value;
-        gameMode = document.getElementById('gameModeInput').value;
+    // গেম স্ক্রিনে যাওয়ার লজিক
+    function enterGameScreen(code) {
+        document.getElementById("menu-screen").classList.add("hidden");
+        document.getElementById("game-screen").classList.remove("hidden");
+        document.getElementById("room-title").innerText = `রুম কোড: ${code}`;
         
-        const colors = ['#ff5252', '#ffeb3b', '#4caf50', '#2196f3'];
-        players = [];
-        for(let i=0; i<count; i++) {
-            let customName = document.getElementById(`playerName_${i}`).value || `প্লেয়ার ${i+1}`;
-            players.push({
-                id: i+1,
-                name: customName,
-                x: 0, y: 0,
-                keys: 0,
-                color: colors[i],
-                skippedTurns: 0,
-                psychonurse: { trapped: false, target: 3, fails: 0 }
-            });
-        }
-
-        initDecks();
-
-        document.getElementById('setupContainer').style.display = 'none';
-        document.getElementById('gameContainer').style.display = 'flex';
-        
-        createBoardGrid();
-        updateStatus();
-        log(`ন্যারেটিভ: অন্ধকার গোলকধাঁধাঁয় সবাই প্রবেশ করেছে। মোমবাতি জ্বলছে...`);
-        if(gameMode === 'online') {
-            log(`🌐 অনলাইন রুম কোড: ${currentRoomCode}`);
-        }
-        log(`বর্তমান টার্ন: ${players[currentPlayerIndex].name}-এর।`);
+        initGrid();
+        listenToRoomUpdates();
     }
 
-    function initDecks() {
-        let mCount = (difficulty === 'easy') ? 16 : (difficulty === 'medium' ? 12 : (difficulty === 'hard' ? 10 : 8));
-        movementDeck = [];
-        for(let i=0; i<mCount; i++) {
-            let r = Math.random();
-            movementDeck.push(r < 0.5 ? 1 : (r < 0.8 ? 2 : 3));
-        }
-        shuffleArray(movementDeck);
+    // রিয়েল-টাইম ডেটা সিংক লজিক
+    function listenToRoomUpdates() {
+        roomRef.child("players").on("value", (snapshot) => {
+            const players = snapshot.val();
+            let statusHTML = "<b>রুমের খেলোয়াড়গণ:</b><br>";
+            
+            // সব সেল ক্লিয়ার করা
+            for (let i = 0; i < 36; i++) {
+                document.getElementById(`cell-${i}`).innerText = "";
+            }
 
-        let keyCardCount = (difficulty === 'easy') ? 5 : (difficulty === 'medium' ? 4 : (difficulty === 'hard' ? 3 : 2));
-        fateDeck = [];
-        for(let i=0; i<keyCardCount; i++) fateDeck.push('KEY');
-        
-        const otherHazards = ['TRAP', 'TRIPPING', 'BLIND', 'THIEF'];
-        if(difficulty !== 'easy') otherHazards.push('KILLER', 'PSYCHONURSE');
-        
-        for(let i=0; i<10; i++) {
-            fateDeck.push(otherHazards[Math.floor(Math.random() * otherHazards.length)]);
-        }
-        shuffleArray(fateDeck);
-    }
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    function openRulebook() { document.getElementById('rulebookModal').style.display = 'flex'; }
-    function closeRulebook() { document.getElementById('rulebookModal').style.display = 'none'; }
-
-    function createBoardGrid() {
-        const boardElem = document.getElementById('gameBoard');
-        boardElem.innerHTML = '';
-
-        for(let r=0; r<BOARD_SIZE; r++) {
-            for(let c=0; c<BOARD_SIZE; c++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                
-                let cellContent = `<span>${c+1},${r+1}</span>`;
-                if(exitDoor.revealed && exitDoor.x === c && exitDoor.y === r) {
-                    cellContent += `<span style="color:#00e676; font-weight:bold; font-size:10px;">🚪 গেট</span>`;
-                }
-
-                players.forEach(p => {
-                    if(p.x === c && p.y === r) {
-                        cellContent += `<span class="player-token" style="background-color: ${p.color};" title="${p.name}"></span>`;
+            if (players) {
+                Object.values(players).forEach(p => {
+                    statusHTML += `${p.name} `;
+                    // প্লেয়ারের পজিশন বোর্ডে দেখানো
+                    if(document.getElementById(`cell-${p.pos}`)) {
+                        document.getElementById(`cell-${p.pos}`).innerText = p.name[0];
                     }
                 });
-
-                cell.innerHTML = cellContent;
-                boardElem.appendChild(cell);
             }
+            document.getElementById("status-text").innerHTML = statusHTML;
+        });
+    }
+
+    // রুম ত্যাগ করা
+    function leaveRoom() {
+        if (roomRef && playerName) {
+            roomRef.child("players/" + playerName).remove();
         }
-    }
-
-    function log(message) {
-        const box = document.getElementById('logBox');
-        box.innerHTML += `<div>> ${message}</div>`;
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function updateStatus() {
-        const p = players[currentPlayerIndex];
-        let totalKeysAll = players.reduce((sum, pl) => sum + pl.keys, 0);
-        let nurseText = p.psychonurse.trapped ? ` | ⚠️ সাইকোনার্স কবলে!` : ``;
-        let roomBadgeHtml = (gameMode === 'online') ? `<br><b>রুম কোড:</b> <span style="color:#03dac6">${currentRoomCode}</span>` : '';
-        
-        document.getElementById('statusDisplay').innerHTML = `
-            <b>টার্ন:</b> <span style="color:${p.color}">${p.name}</span><br>
-            <b>দলগত চাবি:</b> ${totalKeysAll}/4 | <b>তোমার চাবি:</b> ${p.keys}<br>
-            <b>মোমবাতি (কার্ড বাকি):</b> মুভ: ${movementDeck.length} | ফেট: ${fateDeck.length}
-            ${roomBadgeHtml}<br>
-            <b>অবস্থা:</b> ${phase === 'MOVEMENT' ? 'মুভমেন্ট কার্ড তুলুন' : 'ফেট কার্ড তুলুন'}${nurseText}
-        `;
-    }
-
-    function showCardPopup(title, icon, desc) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalIcon').innerText = icon;
-        document.getElementById('modalDesc').innerText = desc;
-        document.getElementById('cardModal').style.display = 'flex';
-    }
-
-    function closeModal() { document.getElementById('cardModal').style.display = 'none'; }
-
-    function drawMovementCard() {
-        let p = players[currentPlayerIndex];
-
-        if(p.skippedTurns > 0) {
-            log(`❌ ${p.name} ট্র্যাপে আটকে থাকায় এই টার্ন মিস করছে!`);
-            p.skippedTurns--;
-            endTurn();
-            return;
-        }
-
-        if(p.psychonurse.trapped) {
-            log(`⚠️ ${p.name} সাইকোনার্সের কাছে বন্দী! ডাইস রোল করে মুক্ত হন।`);
-            document.getElementById('btnMovement').disabled = true;
-            document.getElementById('nurseSection').style.display = 'block';
-            return;
-        }
-
-        if(movementDeck.length === 0) {
-            alert(`🕯️ মোমবাতি নিভে গেছে! মুভমেন্ট ডেক শেষ হওয়ায় অন্ধকার আপনাকে গ্রাস করেছে! Game Over.`);
-            location.reload();
-            return;
-        }
-
-        currentMovement = movementDeck.pop();
-        showCardPopup("মুভমেন্ট কার্ড", "👟", `${p.name}, আপনি ${currentMovement} ঘর সামনে যাওয়ার সুযোগ পেয়েছেন। দিক সিলেক্ট করুন।`);
-        log(`🎲 ${p.name} মুভমেন্ট কার্ড তুলল: ${currentMovement} ঘর।`);
-
-        document.getElementById('btnMovement').disabled = true;
-        document.getElementById('directionSection').style.display = 'block';
-        updateStatus();
-    }
-
-    function movePlayerDirection(dir) {
-        let p = players[currentPlayerIndex];
-        let steps = currentMovement;
-
-        if (dir === 'UP') p.y = Math.max(0, p.y - steps);
-        if (dir === 'DOWN') p.y = Math.min(BOARD_SIZE - 1, p.y + steps);
-        if (dir === 'LEFT') p.x = Math.max(0, p.x - steps);
-        if (dir === 'RIGHT') p.x = Math.min(BOARD_SIZE - 1, p.x + steps);
-
-        createBoardGrid();
-        log(`↗️ ${p.name} ${dir} দিকে ${steps} ঘর সরলো।`);
-
-        let totalKeysAll = players.reduce((sum, pl) => sum + pl.keys, 0);
-        if(exitDoor.revealed && p.x === exitDoor.x && p.y === exitDoor.y && totalKeysAll >= 4) {
-            alert(`🎉 অভিনন্দন! দলগতভাবে ৪টি চাবি সংগ্রহ করে ${p.name} দরজা খুলে সফলভাবে পালিয়ে গেছে!`);
-            location.reload();
-            return;
-        }
-
-        document.getElementById('directionSection').style.display = 'none';
-        document.getElementById('btnFate').disabled = false;
-        phase = 'FATE';
-        updateStatus();
-    }
-
-    function drawFateCard() {
-        let p = players[currentPlayerIndex];
-        if(fateDeck.length === 0) initDecks();
-
-        const fateType = fateDeck.pop();
-
-        switch(fateType) {
-            case 'KEY':
-                p.keys++;
-                let totalK = players.reduce((sum, pl) => sum + pl.keys, 0);
-                showCardPopup("ফেট কার্ড: চাবি লাভ!", "🔑", "অসাধারণ! আপনি একটি চাবি খুঁজে পেয়েছেন!");
-                log(`🔑 ফেট কার্ড থেকে চাবি পাওয়া গেছে! (মোট দলগত: ${totalK}/4)`);
-                if(totalK >= 4) { 
-                    exitDoor.revealed = true; 
-                    createBoardGrid(); 
-                    log(`🚪 এক্সিট গেটের অবস্থান উন্মোচিত হয়েছে (${exitDoor.x+1}, ${exitDoor.y+1})!`);
-                }
-                endTurn();
-                break;
-            case 'TRAP':
-                showCardPopup("বিপদ: ট্র্যাপ কার্ড", "⚡", "আপনি ফাঁদে পড়ে গেছেন! ১ টার্ন মিস।");
-                log(`⚡ ট্র্যাপ কার্ড! ${p.name} ফাঁদে পড়ল।`);
-                p.skippedTurns = 1;
-                endTurn();
-                break;
-            case 'TRIPPING':
-                showCardPopup("উষ্টা খাওয়া কার্ড", "🌀", "পাথরে উষ্টা খেয়ে ১ ঘর পেছাতে হলো!");
-                log(`🌀 ট্রিপিং কার্ড! ১ ঘর পেছাল।`);
-                if(p.x > 0) p.x--;
-                createBoardGrid();
-                endTurn();
-                break;
-            case 'BLIND':
-                showCardPopup("ব্লাইন্ড কার্ড", "🕶️", "দিকজ্ঞান সাময়িকভাবে গুলিয়ে গেছে!");
-                log(`🕶️ ব্লাইন্ড কার্ড!`);
-                endTurn();
-                break;
-            case 'THIEF':
-                if(p.keys > 0) {
-                    p.keys--;
-                    showCardPopup("গবলিন কার্ড", "👺", "গবলিন আপনার ১টি চাবি চুরি করে নিয়ে গেছে!");
-                    log(`👺 গবলিন কার্ড! ১টি চাবি চুরি হয়েছে।`);
-                } else {
-                    showCardPopup("গবলিন কার্ড", "👺", "গবলিন এসেছিল, কিন্তু আপনার কাছে চাবি ছিল না।");
-                    log(`👺 থিফ কার্ড নিষ্ফল।`);
-                }
-                endTurn();
-                break;
-            case 'KILLER':
-                showCardPopup("কিলার কার্ড", "💀", "কিলার আপনাকে মুখোমুখি আক্রমণ করে শেষ করে দিয়েছে!");
-                log(`💀 কিলার কার্ড! ${p.name} মারা গেছে।`);
-                players.splice(currentPlayerIndex, 1);
-                checkGameOver();
-                break;
-            case 'PSYCHONURSE':
-                p.psychonurse.trapped = true;
-                p.psychonurse.target = (difficulty === 'hard' || difficulty === 'nightmare') ? 4 : 3;
-                p.psychonurse.fails = 0;
-                showCardPopup("সাইকোনার্স", "💉", `সাইকোনার্সের খপ্পরে পড়েছেন! মুক্ত হতে ডাইসে কমপক্ষে ${p.psychonurse.target} তুলতে হবে।`);
-                log(`💉 সাইকোনার্সের কবলে ${p.name}!`);
-                document.getElementById('btnFate').disabled = true;
-                document.getElementById('nurseSection').style.display = 'block';
-                updateStatus();
-                break;
-        }
-    }
-
-    function rollPsychonurseDice() {
-        let p = players[currentPlayerIndex];
-        let diceRoll = Math.floor(Math.random() * 6) + 1;
-        const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-        document.getElementById('diceVisualDisplay').innerText = diceFaces[diceRoll - 1];
-
-        if(diceRoll >= p.psychonurse.target) {
-            showCardPopup("মুক্তির আনন্দ", "✨", `ডাইসে ${diceRoll} উঠেছে! আপনি সাইকোনার্স থেকে পালিয়েছেন!`);
-            log(`✨ সফল! সাইকোনার্স থেকে ${p.name} মুক্ত!`);
-            p.psychonurse.trapped = false;
-            document.getElementById('nurseSection').style.display = 'none';
-            endTurn();
-        } else {
-            p.psychonurse.fails++;
-            showCardPopup("ব্যর্থ ডাইস রোল", "❌", `ডাইসে উঠেছে ${diceRoll} (প্রয়োজন কমপক্ষে ${p.psychonurse.target})। (${p.psychonurse.fails}/3 বার ভুল)`);
-            log(`❌ ব্যর্থ! ডাইস: ${diceRoll}।`);
-            
-            if(p.psychonurse.fails >= 3) {
-                alert(`⚰️ ৩ বার ভুল করায় সাইকোনার্স ${p.name}-কে শেষ করেছে!`);
-                players.splice(currentPlayerIndex, 1);
-                document.getElementById('nurseSection').style.display = 'none';
-                checkGameOver();
-                return;
-            }
-            document.getElementById('nurseSection').style.display = 'none';
-            endTurn();
-        }
-    }
-
-    function checkGameOver() {
-        if(players.length === 0) {
-            alert(`💀 সবাই মারা গেছে! Game Over.`);
-            location.reload();
-        } else {
-            currentPlayerIndex = currentPlayerIndex % players.length;
-            resetTurnState();
-            createBoardGrid();
-            updateStatus();
-        }
-    }
-
-    function endTurn() {
-        phase = 'MOVEMENT';
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-        resetTurnState();
-        createBoardGrid();
-        updateStatus();
-        log(`--- পরবর্তী টার্ন: ${players[currentPlayerIndex].name} ---`);
-    }
-
-    function resetTurnState() {
-        document.getElementById('btnMovement').disabled = false;
-        document.getElementById('btnFate').disabled = true;
-        document.getElementById('directionSection').style.display = 'none';
-        document.getElementById('nurseSection').style.display = 'none';
+        location.reload();
     }
 </script>
 
