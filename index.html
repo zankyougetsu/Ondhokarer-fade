@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Night Cage: অন্ধকারের ফাঁদে</title>
-    <!-- Firebase SDK (Compat Version for Vanilla JS) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -29,25 +29,25 @@
         }
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 550px;
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
             box-sizing: border-box;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
             text-align: center;
         }
         h1 {
             color: var(--accent-color);
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 22px;
+            margin-bottom: 5px;
         }
         p {
-            font-size: 14px;
+            font-size: 13px;
             color: #aaa;
         }
-        input, select, button {
+        input, button {
             width: 100%;
             padding: 12px;
             margin: 8px 0;
@@ -55,7 +55,7 @@
             border: 1px solid var(--border-color);
             color: #fff;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             box-sizing: border-box;
         }
         button {
@@ -74,7 +74,7 @@
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             gap: 4px;
-            margin-top: 15px;
+            margin: 15px 0;
         }
         .grid-cell {
             aspect-ratio: 1;
@@ -83,39 +83,58 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
+            color: #ff5555;
+        }
+        .connected-box {
+            background: #1a1a24;
+            border: 1px dashed #444;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            text-align: left;
+            max-height: 120px;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
+    <!-- লবি ও রুম অপশন স্ক্রিন -->
     <div class="container" id="menu-screen">
         <h1>🕯️ The Night Cage: অন্ধকারের ফাঁদে</h1>
-        <p>রিয়েল-টাইম মাল্টিপ্লেয়ার হরর বোর্ড গেম</p>
+        <p>অনলাইন মাল্টিপ্লেয়ার হরর বোর্ড গেম</p>
         
-        <input type="text" id="player-name" placeholder="আপনার নাম লিখুন..." maxlength="15">
+        <input type="text" id="player-name" placeholder="আপনার নাম লিখুন (যেমন: Sabbir)..." maxlength="15">
         
         <button onclick="createRoom()">নতুন রুম তৈরি করুন (Create Room)</button>
-        <div style="margin: 10px 0; font-size: 13px; color: #666;">--- অথবা ---</div>
-        <input type="text" id="room-code-input" placeholder="রুম কোড দিন (যেমন: ABC1234)">
+        <div style="margin: 8px 0; font-size: 12px; color: #776;">--- অথবা বন্ধুর দেওয়া রুমে ঢুকুন ---</div>
+        
+        <input type="text" id="room-code-input" placeholder="রুম কোড দিন (যেমন: ABC123)" maxlength="10">
         <button onclick="joinRoom()" style="background: #28a745;">রুমে প্রবেশ করুন (Join Room)</button>
     </div>
 
+    <!-- মূল গেম ও মাল্টিপ্লেয়ার রুম স্ক্রিন -->
     <div class="container hidden" id="game-screen">
-        <h1 id="room-title">রুম: লবি</h1>
-        <p id="status-text">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</p>
+        <h1 id="room-title">রুম কোড: --</h1>
+        <p id="room-status-msg">খেলোয়াড়দের কানেকশন চেক করা হচ্ছে...</p>
         
-        <div id="game-grid">
-            <!-- ৬x৬ গেম বোর্ড জেনারেট হবে -->
+        <!-- ৬x৬ গেম বোর্ড -->
+        <div id="game-grid"></div>
+
+        <!-- কে কে কানেক্ট হয়েছে তার লিস্ট বক্স -->
+        <div class="connected-box">
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 4px;">👥 বর্তমানে রুমে যুক্ত আছেন:</div>
+            <div id="players-list-container" style="font-size: 14px; color: #4ecc6d;">কেউ নেই</div>
         </div>
 
-        <button onclick="leaveRoom()" style="background: #dc3545; margin-top: 15px;">রুম ছাড়ুন</button>
+        <button onclick="leaveRoom()" style="background: #dc3545; margin-top: 15px;">রুম ছাড়ুন (Leave Room)</button>
     </div>
 
 <script>
     // ----------------------------------------------------
-    // ফায়ারবেস কনফিগারেশন (এখানে তোমার ফায়ারবেস প্রজেক্টের ইনফো বসবে)
+    // ফায়ারবেস কনফিগারেশন (তোমার ডাটাবেস লিংক এখানে থাকবে)
     // ----------------------------------------------------
     const firebaseConfig = {
         apiKey: "YOUR_FIREBASE_API_KEY",
@@ -127,7 +146,6 @@
         appId: "YOUR_FIREBASE_APP_ID"
     };
 
-    // ফায়ারবেস ইনিশিয়ালাইজ
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
@@ -137,7 +155,7 @@
     let playerName = "";
     let roomRef = null;
 
-    // ৬x৬ গ্রিড রেন্ডার করার ফাংশন
+    // ৬x৬ গ্রিড তৈরি করা
     function initGrid() {
         const grid = document.getElementById("game-grid");
         grid.innerHTML = "";
@@ -145,16 +163,17 @@
             const cell = document.createElement("div");
             cell.className = "grid-cell";
             cell.id = `cell-${i}`;
+            cell.innerText = `[${i+1}]`;
             grid.appendChild(cell);
         }
     }
 
-    // রুম কোড জেনারেটর
+    // র‍্যান্ডম রুম কোড জেনারেটর
     function generateRoomCode() {
         return Math.random().toString(36).substring(2, 8).toUpperCase();
     }
 
-    // রুম তৈরি করা
+    // নতুন রুম ক্রিয়েট করার ফাংশন
     function createRoom() {
         playerName = document.getElementById("player-name").value.trim();
         if (!playerName) {
@@ -165,20 +184,21 @@
         currentRoomCode = generateRoomCode();
         roomRef = db.ref("rooms/" + currentRoomCode);
 
+        // রুমে হোস্ট হিসেবে এন্ট্রি নেওয়া
         roomRef.set({
             host: playerName,
-            status: "waiting",
+            createdAt: Date.now(),
             players: {
-                [playerName]: { name: playerName, pos: 0 }
+                [playerName]: { name: playerName, joinedAt: Date.now() }
             }
         }).then(() => {
-            enterGameScreen(currentRoomCode);
-        }).catch((error) => {
-            alert("রুম তৈরি করতে সমস্যা হয়েছে: " + error.message);
+            enterGameUI(currentRoomCode);
+        }).catch((err) => {
+            alert("রুম তৈরি করতে সমস্যা হয়েছে: " + err.message);
         });
     }
 
-    // রুমে জয়েন করা
+    // বিদ্যমান রুমে জয়েন করার ফাংশন
     function joinRoom() {
         playerName = document.getElementById("player-name").value.trim();
         const codeInput = document.getElementById("room-code-input").value.trim().toUpperCase();
@@ -195,60 +215,60 @@
         currentRoomCode = codeInput;
         roomRef = db.ref("rooms/" + currentRoomCode);
 
+        // চেক করা রুমটি ডাটাবেসে আছে কি না
         roomRef.once("value", (snapshot) => {
             if (snapshot.exists()) {
+                // রুমে নতুন প্লেয়ার যোগ করা
                 roomRef.child("players/" + playerName).set({
                     name: playerName,
-                    pos: 0
+                    joinedAt: Date.now()
                 }).then(() => {
-                    enterGameScreen(currentRoomCode);
+                    enterGameUI(currentRoomCode);
                 });
             } else {
-                alert("এই কোডের কোনো রুম খুঁজে পাওয়া যায়নি!");
+                alert("এই কোডের কোনো রুম খুঁজে পাওয়া যায়নি! সঠিক কোড দিন।");
             }
         });
     }
 
-    // গেম স্ক্রিনে যাওয়ার লজিক
-    function enterGameScreen(code) {
+    // গেম স্ক্রিন দৃশ্যমান করা
+    function enterGameUI(code) {
         document.getElementById("menu-screen").classList.add("hidden");
         document.getElementById("game-screen").classList.remove("hidden");
         document.getElementById("room-title").innerText = `রুম কোড: ${code}`;
+        document.getElementById("room-status-msg").innerText = `সফলভাবে রুমে যুক্ত হয়েছেন!`;
         
         initGrid();
-        listenToRoomUpdates();
+        monitorRoomPlayers();
     }
 
-    // রিয়েল-টাইম ডেটা সিংক লজিক
-    function listenToRoomUpdates() {
+    // রিয়েল-টাইমে কে কে রুমে জয়েন করল তা ট্র্যাক করা
+    function monitorRoomPlayers() {
         roomRef.child("players").on("value", (snapshot) => {
-            const players = snapshot.val();
-            let statusHTML = "<b>রুমের খেলোয়াড়গণ:</b><br>";
+            const playersData = snapshot.val();
+            let namesList = [];
             
-            // সব সেল ক্লিয়ার করা
-            for (let i = 0; i < 36; i++) {
-                document.getElementById(`cell-${i}`).innerText = "";
-            }
-
-            if (players) {
-                Object.values(players).forEach(p => {
-                    statusHTML += `${p.name} `;
-                    // প্লেয়ারের পজিশন বোর্ডে দেখানো
-                    if(document.getElementById(`cell-${p.pos}`)) {
-                        document.getElementById(`cell-${p.pos}`).innerText = p.name[0];
-                    }
+            if (playersData) {
+                Object.values(playersData).forEach(p => {
+                    namesList.push(`🕯️ ${p.name}`);
                 });
+                
+                // স্ক্রিনে দেখাবে কে কানেক্ট হয়েছে
+                document.getElementById("players-list-container").innerHTML = namesList.join("<br>");
+                document.getElementById("room-status-msg").innerText = `মোট ${namesList.length} জন খেলোয়াড় রুমে আছেন।`;
             }
-            document.getElementById("status-text").innerHTML = statusHTML;
         });
     }
 
-    // রুম ত্যাগ করা
+    // রুম থেকে বের হয়ে যাওয়া
     function leaveRoom() {
         if (roomRef && playerName) {
-            roomRef.child("players/" + playerName).remove();
+            roomRef.child("players/" + playerName).remove().then(() => {
+                location.reload();
+            });
+        } else {
+            location.reload();
         }
-        location.reload();
     }
 </script>
 
